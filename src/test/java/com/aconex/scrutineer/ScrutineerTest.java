@@ -27,7 +27,6 @@ public class ScrutineerTest {
     @Mock
     private JdbcIdAndVersionStream jdbcIdAndVersionStream;
 
-
     @Mock
     private IdAndVersionStreamVerifier idAndVersionStreamVerifier;
 
@@ -59,6 +58,7 @@ public class ScrutineerTest {
 
     @Test
     public void testVerify() {
+        options.versionField = "version";
         Scrutineer scrutineer = spy(new Scrutineer(options));
         doReturn(elasticSearchIdAndVersionStream).when(scrutineer).createElasticSearchIdAndVersionStream(eq(options));
         doReturn(jdbcIdAndVersionStream).when(scrutineer).createJdbcIdAndVersionStream(options);

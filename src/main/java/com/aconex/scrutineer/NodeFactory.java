@@ -1,6 +1,5 @@
 package com.aconex.scrutineer;
 
-
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;

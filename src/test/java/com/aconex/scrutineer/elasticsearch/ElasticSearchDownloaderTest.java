@@ -8,17 +8,16 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
 
+import com.aconex.scrutineer.DocumentWrapperFactory;
+import com.aconex.scrutineer.MetaDocumentWrapper;
+import com.aconex.scrutineer.SourceDocumentWrapper;
 import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -43,8 +42,10 @@ public class ElasticSearchDownloaderTest {
     private static final String ID = "123";
     private static final long VERSION = 123L;
     private static final String QUERY = "*";
+    private static final String VERSION_FIELD = "";
 
     private final IdAndVersionFactory idAndVersionFactory = StringIdAndVersion.FACTORY;
+    private final DocumentWrapperFactory documentWrapperFactory = MetaDocumentWrapper.FACTORY;
     @Mock
     private Client client;
     @Mock
@@ -70,7 +71,7 @@ public class ElasticSearchDownloaderTest {
 
     @Test
     public void shouldEndAfterOnlyOneBatch() throws IOException {
-        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory));
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory));
         doReturn(false).when(elasticSearchDownloader).writeSearchResponseToOutputStream(any(ObjectOutputStream.class),any(SearchResponse.class));
         when(client.prepareSearchScroll(any(String.class))).thenReturn(searchScrollRequestBuilder);
         when(searchScrollRequestBuilder.execute()).thenReturn(listenableActionFuture);
@@ -82,7 +83,7 @@ public class ElasticSearchDownloaderTest {
 
     @Test
     public void shouldRequestAndProcessNextBatch() throws IOException {
-        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory));
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory));
         doReturn(true).doReturn(false).when(elasticSearchDownloader).writeSearchResponseToOutputStream(any(ObjectOutputStream.class),any(SearchResponse.class));
         when(client.prepareSearchScroll(any(String.class))).thenReturn(searchScrollRequestBuilder);
         when(searchScrollRequestBuilder.execute()).thenReturn(listenableActionFuture);
@@ -96,14 +97,15 @@ public class ElasticSearchDownloaderTest {
 
     @Test
     public void shouldShouldReturnFalseWhenBatchIsEmpty() throws IOException {
-        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory);
+        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory);
         when(searchResponse.getHits()).thenReturn(hits);
         when(hits.hits()).thenReturn(new SearchHit[0]);
         assertThat(elasticSearchDownloader.writeSearchResponseToOutputStream(objectOutputStream, searchResponse), is(false));
     }
+
     @Test
     public void shouldWriteHitsToOutputStream() throws IOException {
-        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory);
+        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory);
         when(searchResponse.getHits()).thenReturn(hits);
         when(hits.hits()).thenReturn(new SearchHit[]{hit});
         when(hit.getId()).thenReturn(ID);
@@ -115,16 +117,47 @@ public class ElasticSearchDownloaderTest {
     }
 
     @Test
+    public void shouldWriteHitsToOutputStreamFromCustomVersionField() throws IOException {
+        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, "version", idAndVersionFactory, SourceDocumentWrapper.FACTORY);
+        when(searchResponse.getHits()).thenReturn(hits);
+        when(hits.hits()).thenReturn(new SearchHit[]{hit});
+        HashMap<String, Object> source = new HashMap<String, Object>();
+        source.put("version", "4");
+        when(hit.getSource()).thenReturn(source);
+        when(hit.getId()).thenReturn(ID);
+        assertThat(elasticSearchDownloader.writeSearchResponseToOutputStream(objectOutputStream, searchResponse), is(true));
+        verify(objectOutputStream).writeUTF(ID);
+        verify(objectOutputStream).writeLong(4);
+        verifyNoMoreInteractions(objectOutputStream);
+    }
+
+    @Test
     public void shouldDoElasticSearchRequest() {
         when(client.prepareSearch(INDEX_NAME)).thenReturn(searchRequestBuilder);
         when(searchRequestBuilder.execute()).thenReturn(listenableActionFuture);
         when(listenableActionFuture.actionGet()).thenReturn(searchResponse);
-        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory));
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory));
         doReturn(queryBuilder).when(elasticSearchDownloader).createQuery();
         assertThat(elasticSearchDownloader.startScroll(), is(searchResponse));
         verify(searchRequestBuilder).setSearchType(SearchType.SCAN);
-        verify(searchRequestBuilder).setNoFields();
         verify(searchRequestBuilder).setVersion(true);
+        verify(searchRequestBuilder).setNoFields();
+        verify(searchRequestBuilder).setSize(BATCH_SIZE);
+        verify(searchRequestBuilder).setScroll(TimeValue.timeValueMinutes(SCROLL_TIME_IN_MINUTES));
+        verify(searchRequestBuilder).setQuery(queryBuilder);
+    }
+
+    @Test
+    public void shouldDoElasticSearchRequestWithFields() {
+        when(client.prepareSearch(INDEX_NAME)).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.execute()).thenReturn(listenableActionFuture);
+        when(listenableActionFuture.actionGet()).thenReturn(searchResponse);
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, "version", idAndVersionFactory, documentWrapperFactory));
+        doReturn(queryBuilder).when(elasticSearchDownloader).createQuery();
+        assertThat(elasticSearchDownloader.startScroll(), is(searchResponse));
+        verify(searchRequestBuilder).setSearchType(SearchType.SCAN);
+        verify(searchRequestBuilder).setVersion(true);
+        verify(searchRequestBuilder, never()).setNoFields();
         verify(searchRequestBuilder).setSize(BATCH_SIZE);
         verify(searchRequestBuilder).setScroll(TimeValue.timeValueMinutes(SCROLL_TIME_IN_MINUTES));
         verify(searchRequestBuilder).setQuery(queryBuilder);
@@ -132,19 +165,19 @@ public class ElasticSearchDownloaderTest {
 
     @Test
     public void shouldCreateQueryBuilderWithQuery() {
-        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory));
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory));
         assertThat(elasticSearchDownloader.createQuery().toString(), containsString(QUERY));
     }
 
     @Test
     public void shouldCreateQueryBuilderWithDefaultAllField() {
-        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory));
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory));
         assertThat(elasticSearchDownloader.createQuery().toString(), containsString("_all"));
     }
 
     @Test
     public void shouldCreateQueryBuilderWithDefaultAndOperator() {
-        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, idAndVersionFactory));
+        ElasticSearchDownloader elasticSearchDownloader = spy(new ElasticSearchDownloader(client, INDEX_NAME, QUERY, VERSION_FIELD, idAndVersionFactory, documentWrapperFactory));
         assertThat(elasticSearchDownloader.createQuery().toString(), containsString("and"));
     }
 }

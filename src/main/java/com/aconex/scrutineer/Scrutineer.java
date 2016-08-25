@@ -55,10 +55,10 @@ public class Scrutineer {
     }
 
     public void verify() {
-        idAndVersionFactory = createIdAndVersionFactory();
+        this.idAndVersionFactory = createIdAndVersionFactory();
+        this.documentWrapperFactory = createDocumentWrapperFactory();
         ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream = createElasticSearchIdAndVersionStream(options);
         JdbcIdAndVersionStream jdbcIdAndVersionStream = createJdbcIdAndVersionStream(options);
-
         verify(elasticSearchIdAndVersionStream, jdbcIdAndVersionStream, new IdAndVersionStreamVerifier());
     }
 
@@ -126,10 +126,18 @@ public class Scrutineer {
         return options.numeric ? LongIdAndVersion.FACTORY : StringIdAndVersion.FACTORY;
     }
 
+    private DocumentWrapperFactory createDocumentWrapperFactory() {
+        return options.versionField.isEmpty() ? MetaDocumentWrapper.FACTORY : SourceDocumentWrapper.FACTORY;
+    }
+
     ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options) {
-        this.node = new NodeFactory().createNode(options);
-        this.client = node.client();
-        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query, idAndVersionFactory), new ElasticSearchSorter(createSorter()), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+        if (options.hostName.isEmpty()) {
+            this.node = new NodeFactory().createNode(options);
+            this.client = node.client();
+        } else {
+            this.client = new TransportClientFactory().createTransportClient(options);
+        }
+        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query, options.versionField, idAndVersionFactory, documentWrapperFactory), new ElasticSearchSorter(createSorter()), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
     }
 
     private Sorter<IdAndVersion> createSorter() {
@@ -157,6 +165,7 @@ public class Scrutineer {
     private static final int DEFAULT_SORT_MEM = 256 * 1024 * 1024;
     private final ScrutineerCommandLineOptions options;
     private IdAndVersionFactory idAndVersionFactory;
+    private DocumentWrapperFactory documentWrapperFactory;
     private Node node;
     private Client client;
     private Connection connection;
