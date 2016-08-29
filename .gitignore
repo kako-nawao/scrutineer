@@ -6,3 +6,6 @@ data
 *.ipr
 *.iws
 logs
+
+# Maven shade plugin
+dependency-reduced-pom.xml
