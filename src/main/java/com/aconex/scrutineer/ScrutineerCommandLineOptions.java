@@ -6,14 +6,20 @@ import com.beust.jcommander.Parameters;
 // CHECKSTYLE:OFF This is the standard JCommander pattern
 @Parameters(separators = "=")
 public class ScrutineerCommandLineOptions {
+    @Parameter(names = "--hostName", description = "ElasticSearch hostname identifier")
+    public String hostName = "";
+
     @Parameter(names = "--clusterName", description = "ElasticSearch cluster name identifier", required = true)
     public String clusterName;
 
     @Parameter(names = "--indexName", description = "ElasticSearch index name to Verify", required = true)
     public String indexName;
 
-    @Parameter(names = "--query", description = "ElasticSearch query to create Secondary stream.  Not required to be ordered", required = false)
+    @Parameter(names = "--query", description = "ElasticSearch query to create Secondary stream.  Not required to be ordered")
     public String query = "*";
+
+    @Parameter(names = "--versionField", description = "ElasticSearch version field if in document source")
+    public String versionField = "";
 
     @Parameter(names = "--jdbcDriverClass", description = "FQN of the JDBC Driver class", required = true)
     public String jdbcDriverClass;
@@ -24,7 +30,7 @@ public class ScrutineerCommandLineOptions {
     @Parameter(names = "--jdbcUser", description = "JDBC Username", required = true)
     public String jdbcUser;
 
-    @Parameter(names = "--jdbcPassword", description = "JDBC Password", required = false)
+    @Parameter(names = "--jdbcPassword", description = "JDBC Password")
     public String jdbcPassword;
 
     @Parameter(names = "--sql", description = "SQL used to create Primary stream, which should return results in _lexicographical_ order", required = true)

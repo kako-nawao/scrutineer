@@ -6,6 +6,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Iterator;
 
+import com.aconex.scrutineer.*;
 import org.apache.commons.lang.SystemUtils;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.VersionType;
@@ -14,9 +15,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.aconex.scrutineer.IdAndVersion;
-import com.aconex.scrutineer.IdAndVersionFactory;
-import com.aconex.scrutineer.StringIdAndVersion;
 import com.fasterxml.sort.DataReaderFactory;
 import com.fasterxml.sort.DataWriterFactory;
 import com.fasterxml.sort.SortConfig;
@@ -27,6 +25,7 @@ public class ElasticSearchIdAndVersionStreamIntegrationTest {
 
     private static final String INDEX_NAME = "local";
 	private final IdAndVersionFactory idAndVersionFactory = StringIdAndVersion.FACTORY;
+    private final DocumentWrapperFactory documentWrapperFactory = MetaDocumentWrapper.FACTORY;
     private Client client;
     private ElasticSearchTestHelper elasticSearchTestHelper;
 
@@ -56,7 +55,7 @@ public class ElasticSearchIdAndVersionStreamIntegrationTest {
         DataReaderFactory<IdAndVersion> dataReaderFactory = new IdAndVersionDataReaderFactory(idAndVersionFactory);
         DataWriterFactory<IdAndVersion> dataWriterFactory = new IdAndVersionDataWriterFactory();
         Sorter sorter = new Sorter(sortConfig, dataReaderFactory, dataWriterFactory, new NaturalComparator<IdAndVersion>());
-        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, "_type:idandversion", idAndVersionFactory);
+        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, "_type:idandversion", "", idAndVersionFactory, documentWrapperFactory);
         ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream =
                 new ElasticSearchIdAndVersionStream(elasticSearchDownloader, new ElasticSearchSorter(sorter), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
 

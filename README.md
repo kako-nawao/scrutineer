@@ -75,17 +75,15 @@ package.  We already have a JTDS driver in there if you're using SQL Server (tha
 
 *Note:* if you're weirded out about that '...cast(...)' then don't worry, we'll explain that shortly.
 
-* **jdbcURL** – Standard JDBC URL you would use for your app to connect to your database
+* **jdbcURL** - Standard JDBC URL you would use for your app to connect to your database
 * **jdbcDriverClass** - Fully qualified class name of your JDBC Driver (don't forget to put your JDBC Driver jar in the lib directory as said above!)
-* **jdbcUser** - user account to access your JDBC Database
-* **jdbcPassword** -- password required for the user credentials
+* **jdbcUser** - User account to access your JDBC Database
+* **jdbcPassword** - Password required for the user credentials
 * **sql** - The SQL used to generate a lexicographical stream of ID & Version values (in that column order)
-* **clusterName** - this is your ElasticSearch cluster name used to autodetect and connect to a node in your cluster
-* **indexName** - the name of the index on your ElasticSearch cluster
-* **query** - A query_parser compatible search query that returns all documents in your ElasticSearch index relating to the SQL query you're using
-  Since it is common for an index to contain a type-per-db-table you can use the "_type:<type>" search query to filter for all values for that type.
-* **numeric** - use this if your query returns results numerically ordered 
-
+* **clusterName** - This is your ElasticSearch cluster name used to autodetect and connect to a node in your cluster
+* **indexName** - The name of the index on your ElasticSearch cluster
+* **query** - A query_parser compatible search query that returns all documents in your ElasticSearch index relating to the SQL query you're using. Since it is common for an index to contain a type-per-db-table you can use the "_type:<type>" search query to filter for all values for that type.
+* **numeric** - Use this if your query returns results numerically ordered
 
 Output
 ======
@@ -111,6 +109,19 @@ This means the version of the object stored in the secondary is not the same inf
 The object was removed from the Primary store, but the secondary still has it.  You should remove this item from your secondary.
 
 Scrutineer does _not_ report when items match, we'll presume you're just fine with that...
+
+Remote ElasticSearch Hosts
+==========================
+If you're connecting to a remote host, you need to specify the host name:
+
+    --hostName=my.elastic.search.net
+
+Custom Version Fields
+=====================
+By default the version is taken from the `_version` meta-field, but you can specify a custom field contained in
+the document source as well:
+
+    --versionField=my_version_field
 
 Versions as Timestamps
 ======================
