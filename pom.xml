@@ -6,7 +6,6 @@
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
-
     <groupId>com.aconex.scrutineer</groupId>
     <artifactId>scrutineer</artifactId>
     <version>1.1.4-SNAPSHOT</version>
@@ -164,6 +163,11 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.1-901-1.jdbc4</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -177,7 +181,6 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 
@@ -325,6 +328,7 @@
             </activation>
             <build>
                 <plugins>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -335,6 +339,7 @@
                             </excludes>
                         </configuration>
                     </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -395,6 +400,7 @@
                             </execution>
                         </executions>
                     </plugin>
+
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>appassembler-maven-plugin</artifactId>
@@ -420,6 +426,7 @@
                             </programs>
                         </configuration>
                     </plugin>
+
                     <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
                         <version>2.2.1</version>
@@ -439,6 +446,7 @@
                             </execution>
                         </executions>
                     </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
@@ -454,9 +462,33 @@
                         </executions>
                     </plugin>
 
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>2.4.3</version>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>com.aconex.scrutineer.Scrutineer</Main-Class>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>functional-tests</id>
             <build>

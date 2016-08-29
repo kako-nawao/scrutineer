@@ -60,7 +60,6 @@ public class ElasticSearchDownloader {
     }
 
     void consumeBatches(ObjectOutputStream objectOutputStream, String initialScrollId) throws IOException {
-
         String scrollId = initialScrollId;
         SearchResponse batchSearchResponse;
         do {

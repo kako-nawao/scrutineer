@@ -6,12 +6,12 @@ public class MetaDocumentWrapper extends AbstractDocumentWrapper {
 
     public static final DocumentWrapperFactory FACTORY = MetaDocumentWrapperFactory.INSTANCE;
 
-    public MetaDocumentWrapper(SearchHit hit, String versionField) {
-        super(hit, versionField);
+    public MetaDocumentWrapper(SearchHit hit) {
+        super(hit);
     }
 
     @Override
     public long getVersion() {
-        return hit.getVersion();
+        return getHit().getVersion();
     }
 }

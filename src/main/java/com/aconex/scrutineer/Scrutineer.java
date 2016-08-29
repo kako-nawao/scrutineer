@@ -117,9 +117,18 @@ public class Scrutineer {
         return new CoincidentFilteredStreamVerifierListener(new PrintStreamOutputVersionStreamVerifierListener(System.err, formatter));
     }
 
-
     public Scrutineer(ScrutineerCommandLineOptions options) {
         this.options = options;
+    }
+
+    private Client openClient(ScrutineerCommandLineOptions options) {
+        if (options.hostName.isEmpty()) {
+            this.node = new NodeFactory().createNode(options);
+            this.client = node.client();
+        } else {
+            this.client = new TransportClientFactory().createTransportClient(options);
+        }
+        return client;
     }
 
     private IdAndVersionFactory createIdAndVersionFactory() {
@@ -131,13 +140,9 @@ public class Scrutineer {
     }
 
     ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options) {
-        if (options.hostName.isEmpty()) {
-            this.node = new NodeFactory().createNode(options);
-            this.client = node.client();
-        } else {
-            this.client = new TransportClientFactory().createTransportClient(options);
-        }
-        return new ElasticSearchIdAndVersionStream(new ElasticSearchDownloader(client, options.indexName, options.query, options.versionField, idAndVersionFactory, documentWrapperFactory), new ElasticSearchSorter(createSorter()), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+        openClient(options);
+        ElasticSearchDownloader ed = new ElasticSearchDownloader(client, options.indexName, options.query, options.versionField, idAndVersionFactory, documentWrapperFactory);
+        return new ElasticSearchIdAndVersionStream(ed, new ElasticSearchSorter(createSorter()), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
     }
 
     private Sorter<IdAndVersion> createSorter() {

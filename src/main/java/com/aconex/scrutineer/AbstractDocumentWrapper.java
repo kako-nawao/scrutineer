@@ -4,15 +4,20 @@ import org.elasticsearch.search.SearchHit;
 
 public abstract class AbstractDocumentWrapper implements DocumentWrapper {
 
-    protected final SearchHit hit;
+    private final SearchHit hit;
 
-    protected AbstractDocumentWrapper(SearchHit hit, String versionField) {
+    protected AbstractDocumentWrapper(SearchHit hit) {
         this.hit = hit;
     }
 
     @Override
+    public SearchHit getHit() {
+        return hit;
+    }
+
+    @Override
     public String getId() {
-        return hit.getId();
+        return getHit().getId();
     }
 
     public abstract long getVersion();
