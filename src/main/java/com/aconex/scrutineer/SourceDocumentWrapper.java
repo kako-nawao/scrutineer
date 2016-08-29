@@ -12,7 +12,7 @@ public class SourceDocumentWrapper extends AbstractDocumentWrapper {
     private String versionField;
 
     public SourceDocumentWrapper(SearchHit hit, String versionField) {
-        super(hit, versionField);
+        super(hit);
         this.versionField = versionField;
         this.source = hit.getSource();
     }

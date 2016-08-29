@@ -9,7 +9,7 @@ public class TransportClientFactory {
 
     public TransportClient createTransportClient(ScrutineerCommandLineOptions commandLineOptions) {
         TransportClient client = new TransportClient(createSettings(commandLineOptions));
-        client.addTransportAddress(new InetSocketTransportAddress(commandLineOptions.hostName, 9300));
+        client.addTransportAddress(new InetSocketTransportAddress(commandLineOptions.hostName, commandLineOptions.portNumber));
         return client;
     }
 
