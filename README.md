@@ -112,7 +112,7 @@ Scrutineer does _not_ report when items match, we'll presume you're just fine wi
 
 Remote ElasticSearch Hosts
 ==========================
-If you're connecting to a remote host, you need to specify the host name:
+If you're connecting to a remote host, you need to specify the host name instead of the cluster name:
 
     --hostName=my.elastic.search.net
 

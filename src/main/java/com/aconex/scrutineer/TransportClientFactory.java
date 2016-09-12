@@ -8,14 +8,13 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 public class TransportClientFactory {
 
     public TransportClient createTransportClient(ScrutineerCommandLineOptions commandLineOptions) {
-        TransportClient client = new TransportClient(createSettings(commandLineOptions));
+        TransportClient client = new TransportClient(createSettings());
         client.addTransportAddress(new InetSocketTransportAddress(commandLineOptions.hostName, commandLineOptions.portNumber));
         return client;
     }
 
-    Settings createSettings(ScrutineerCommandLineOptions commandLineOptions) {
+    Settings createSettings() {
         return ImmutableSettings.settingsBuilder()
-                .put("cluster.name", commandLineOptions.clusterName)
                 .build();
     }
 

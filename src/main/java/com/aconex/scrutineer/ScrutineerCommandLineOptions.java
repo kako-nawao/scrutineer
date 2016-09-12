@@ -7,12 +7,12 @@ import com.beust.jcommander.Parameters;
 @Parameters(separators = "=")
 public class ScrutineerCommandLineOptions {
     @Parameter(names = "--hostName", description = "ElasticSearch hostname identifier")
-    public String hostName = "";
+    public String hostName;
 
     @Parameter(names = "--portNumber", description = "ElasticSearch port identifier")
     public int portNumber = 9300;
 
-    @Parameter(names = "--clusterName", description = "ElasticSearch cluster name identifier", required = true)
+    @Parameter(names = "--clusterName", description = "ElasticSearch cluster name identifier")
     public String clusterName;
 
     @Parameter(names = "--indexName", description = "ElasticSearch index name to Verify", required = true)

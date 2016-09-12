@@ -2,7 +2,9 @@ package com.aconex.scrutineer;
 
 import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
 import com.aconex.scrutineer.jdbc.JdbcIdAndVersionStream;
+import com.beust.jcommander.ParameterException;
 import com.google.common.base.Function;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -59,14 +61,31 @@ public class ScrutineerTest {
     @Test
     public void testVerify() {
         options.versionField = "version";
+        options.clusterName = "pilipin";
+
         Scrutineer scrutineer = spy(new Scrutineer(options));
         doReturn(elasticSearchIdAndVersionStream).when(scrutineer).createElasticSearchIdAndVersionStream(eq(options));
         doReturn(jdbcIdAndVersionStream).when(scrutineer).createJdbcIdAndVersionStream(options);
         doNothing().when(scrutineer).verify(eq(elasticSearchIdAndVersionStream), eq(jdbcIdAndVersionStream), any(IdAndVersionStreamVerifier.class));
+
         scrutineer.verify();
-
         verify(scrutineer).verify(eq(elasticSearchIdAndVersionStream), eq(jdbcIdAndVersionStream), any(IdAndVersionStreamVerifier.class));
+    }
 
+    @Test
+    public void testVerifyMissingParam() {
+        options.versionField = "version";
+
+        Scrutineer scrutineer = spy(new Scrutineer(options));
+        doReturn(elasticSearchIdAndVersionStream).when(scrutineer).createElasticSearchIdAndVersionStream(eq(options));
+        doReturn(jdbcIdAndVersionStream).when(scrutineer).createJdbcIdAndVersionStream(options);
+        doNothing().when(scrutineer).verify(eq(elasticSearchIdAndVersionStream), eq(jdbcIdAndVersionStream), any(IdAndVersionStreamVerifier.class));
+
+        try {
+            scrutineer.verify();
+            Assert.fail("Parameter exception not raised");
+        } catch (ParameterException err) {
+        }
     }
 
     @Test

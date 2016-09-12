@@ -8,6 +8,7 @@ import com.aconex.scrutineer.elasticsearch.IdAndVersionDataWriterFactory;
 import com.aconex.scrutineer.elasticsearch.IteratorFactory;
 import com.aconex.scrutineer.jdbc.JdbcIdAndVersionStream;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import com.fasterxml.sort.DataReaderFactory;
 import com.fasterxml.sort.DataWriterFactory;
 import com.fasterxml.sort.SortConfig;
@@ -57,6 +58,9 @@ public class Scrutineer {
     public void verify() {
         this.idAndVersionFactory = createIdAndVersionFactory();
         this.documentWrapperFactory = createDocumentWrapperFactory();
+        if ((options.clusterName == null) && (options.hostName == null)){
+            throw new ParameterException("Either clusterName or hostName must be provided.");
+        }
         ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream = createElasticSearchIdAndVersionStream(options);
         JdbcIdAndVersionStream jdbcIdAndVersionStream = createJdbcIdAndVersionStream(options);
         verify(elasticSearchIdAndVersionStream, jdbcIdAndVersionStream, new IdAndVersionStreamVerifier());
@@ -122,7 +126,7 @@ public class Scrutineer {
     }
 
     private Client openClient(ScrutineerCommandLineOptions options) {
-        if (options.hostName.isEmpty()) {
+        if (options.clusterName != null) {
             this.node = new NodeFactory().createNode(options);
             this.client = node.client();
         } else {
