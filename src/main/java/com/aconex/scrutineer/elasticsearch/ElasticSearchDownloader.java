@@ -28,7 +28,6 @@ public class ElasticSearchDownloader {
     private final String indexName;
     private final String query;
     private final String versionField;
-    private final boolean skipFields;
     private final IdAndVersionFactory idAndVersionFactory;
     private final DocumentWrapperFactory documentWrapperFactory;
 
@@ -38,7 +37,6 @@ public class ElasticSearchDownloader {
         this.indexName = indexName;
         this.query = query;
         this.versionField = versionField;
-        this.skipFields = versionField.isEmpty();
         this.idAndVersionFactory = idAndVersionFactory;
         this.documentWrapperFactory = documentWrapperFactory;
     }
@@ -88,13 +86,15 @@ public class ElasticSearchDownloader {
         searchRequestBuilder.setSearchType(SearchType.SCAN);
         searchRequestBuilder.setQuery(createQuery());
         searchRequestBuilder.setSize(BATCH_SIZE);
-        if (skipFields) {
+        if (versionField.isEmpty()) {
             searchRequestBuilder.setNoFields();
+            searchRequestBuilder.setVersion(true);
+        } else {
+            searchRequestBuilder.addField(versionField);
+            searchRequestBuilder.setVersion(false);
         }
         searchRequestBuilder.setExplain(false);
-        searchRequestBuilder.setVersion(true);
         searchRequestBuilder.setScroll(TimeValue.timeValueMinutes(SCROLL_TIME_IN_MINUTES));
-
         return searchRequestBuilder.execute().actionGet();
     }
 

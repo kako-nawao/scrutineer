@@ -13,7 +13,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
+import java.util.*;
 
 import com.aconex.scrutineer.DocumentWrapperFactory;
 import com.aconex.scrutineer.MetaDocumentWrapper;
@@ -24,10 +24,14 @@ import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.internal.InternalSearchHitField;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -121,9 +125,9 @@ public class ElasticSearchDownloaderTest {
         ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, "version", idAndVersionFactory, SourceDocumentWrapper.FACTORY);
         when(searchResponse.getHits()).thenReturn(hits);
         when(hits.hits()).thenReturn(new SearchHit[]{hit});
-        HashMap<String, Object> source = new HashMap<String, Object>();
-        source.put("version", "4");
-        when(hit.getSource()).thenReturn(source);
+        Map<String, SearchHitField> fields = new HashMap<String, SearchHitField>();
+        fields.put("version", new InternalSearchHitField("version", Arrays.<Object>asList("4")));
+        when(hit.getFields()).thenReturn(fields);
         when(hit.getId()).thenReturn(ID);
         assertThat(elasticSearchDownloader.writeSearchResponseToOutputStream(objectOutputStream, searchResponse), is(true));
         verify(objectOutputStream).writeUTF(ID);
@@ -156,8 +160,9 @@ public class ElasticSearchDownloaderTest {
         doReturn(queryBuilder).when(elasticSearchDownloader).createQuery();
         assertThat(elasticSearchDownloader.startScroll(), is(searchResponse));
         verify(searchRequestBuilder).setSearchType(SearchType.SCAN);
-        verify(searchRequestBuilder).setVersion(true);
+        verify(searchRequestBuilder).setVersion(false);
         verify(searchRequestBuilder, never()).setNoFields();
+        verify(searchRequestBuilder).addField("version");
         verify(searchRequestBuilder).setSize(BATCH_SIZE);
         verify(searchRequestBuilder).setScroll(TimeValue.timeValueMinutes(SCROLL_TIME_IN_MINUTES));
         verify(searchRequestBuilder).setQuery(queryBuilder);
