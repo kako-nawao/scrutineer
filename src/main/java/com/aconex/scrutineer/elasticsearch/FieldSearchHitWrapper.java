@@ -2,13 +2,13 @@ package com.aconex.scrutineer.elasticsearch;
 
 import org.elasticsearch.search.SearchHit;
 
-public class SourceSearchHitWrapper extends AbstractSearchHitWrapper {
+public class FieldSearchHitWrapper extends AbstractSearchHitWrapper {
 
-    public static final SearchHitWrapperFactory FACTORY = SourceSearchHitWrapperFactory.INSTANCE;
+    public static final SearchHitWrapperFactory FACTORY = FieldSearchHitWrapperFactory.INSTANCE;
 
     private String versionField;
 
-    public SourceSearchHitWrapper(SearchHit hit, String versionField) {
+    public FieldSearchHitWrapper(SearchHit hit, String versionField) {
         super(hit);
         this.versionField = versionField;
     }

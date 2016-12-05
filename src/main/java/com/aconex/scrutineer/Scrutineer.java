@@ -3,7 +3,7 @@ package com.aconex.scrutineer;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
 import com.aconex.scrutineer.elasticsearch.SearchHitWrapperFactory;
 import com.aconex.scrutineer.elasticsearch.MetaSearchHitWrapper;
-import com.aconex.scrutineer.elasticsearch.SourceSearchHitWrapper;
+import com.aconex.scrutineer.elasticsearch.FieldSearchHitWrapper;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchDownloader;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchSorter;
 import com.aconex.scrutineer.elasticsearch.IteratorFactory;
@@ -139,7 +139,7 @@ public class Scrutineer {
     }
 
     private SearchHitWrapperFactory createDocumentWrapperFactory() {
-        return options.versionField.isEmpty() ? MetaSearchHitWrapper.FACTORY : SourceSearchHitWrapper.FACTORY;
+        return options.versionField.isEmpty() ? MetaSearchHitWrapper.FACTORY : FieldSearchHitWrapper.FACTORY;
     }
 
     ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options) {

@@ -125,7 +125,7 @@ public class ElasticSearchDownloaderTest {
 
     @Test
     public void shouldWriteHitsToOutputStreamFromCustomVersionField() throws IOException {
-        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, "version", idAndVersionFactory, SourceSearchHitWrapper.FACTORY);
+        ElasticSearchDownloader elasticSearchDownloader = new ElasticSearchDownloader(client, INDEX_NAME, QUERY, "version", idAndVersionFactory, FieldSearchHitWrapper.FACTORY);
         when(searchResponse.getHits()).thenReturn(hits);
         when(hits.hits()).thenReturn(new SearchHit[]{hit});
         Map<String, SearchHitField> fields = new HashMap<String, SearchHitField>();
