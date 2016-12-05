@@ -1,15 +1,14 @@
-package com.aconex.scrutineer;
+package com.aconex.scrutineer.elasticsearch;
 
 import org.elasticsearch.search.SearchHit;
 
+public class SourceSearchHitWrapper extends AbstractSearchHitWrapper {
 
-public class SourceDocumentWrapper extends AbstractDocumentWrapper {
-
-    public static final DocumentWrapperFactory FACTORY = SourceDocumentWrapperFactory.INSTANCE;
+    public static final SearchHitWrapperFactory FACTORY = SourceSearchHitWrapperFactory.INSTANCE;
 
     private String versionField;
 
-    public SourceDocumentWrapper(SearchHit hit, String versionField) {
+    public SourceSearchHitWrapper(SearchHit hit, String versionField) {
         super(hit);
         this.versionField = versionField;
     }

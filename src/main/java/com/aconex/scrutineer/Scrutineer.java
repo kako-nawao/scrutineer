@@ -1,11 +1,14 @@
 package com.aconex.scrutineer;
 
-import com.aconex.scrutineer.elasticsearch.ElasticSearchDownloader;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchIdAndVersionStream;
+import com.aconex.scrutineer.elasticsearch.SearchHitWrapperFactory;
+import com.aconex.scrutineer.elasticsearch.MetaSearchHitWrapper;
+import com.aconex.scrutineer.elasticsearch.SourceSearchHitWrapper;
+import com.aconex.scrutineer.elasticsearch.ElasticSearchDownloader;
 import com.aconex.scrutineer.elasticsearch.ElasticSearchSorter;
-import com.aconex.scrutineer.elasticsearch.IdAndVersionDataReaderFactory;
-import com.aconex.scrutineer.elasticsearch.IdAndVersionDataWriterFactory;
 import com.aconex.scrutineer.elasticsearch.IteratorFactory;
+import com.aconex.scrutineer.elasticsearch.IdAndVersionDataWriterFactory;
+import com.aconex.scrutineer.elasticsearch.IdAndVersionDataReaderFactory;
 import com.aconex.scrutineer.jdbc.JdbcIdAndVersionStream;
 import com.beust.jcommander.JCommander;
 import com.fasterxml.sort.DataReaderFactory;
@@ -56,7 +59,7 @@ public class Scrutineer {
 
     public void verify() {
         this.idAndVersionFactory = createIdAndVersionFactory();
-        this.documentWrapperFactory = createDocumentWrapperFactory();
+        this.searchHitWrapperFactory = createDocumentWrapperFactory();
         ElasticSearchIdAndVersionStream elasticSearchIdAndVersionStream = createElasticSearchIdAndVersionStream(options);
         JdbcIdAndVersionStream jdbcIdAndVersionStream = createJdbcIdAndVersionStream(options);
         verify(elasticSearchIdAndVersionStream, jdbcIdAndVersionStream, new IdAndVersionStreamVerifier());
@@ -135,13 +138,13 @@ public class Scrutineer {
         return options.numeric ? LongIdAndVersion.FACTORY : StringIdAndVersion.FACTORY;
     }
 
-    private DocumentWrapperFactory createDocumentWrapperFactory() {
-        return options.versionField.isEmpty() ? MetaDocumentWrapper.FACTORY : SourceDocumentWrapper.FACTORY;
+    private SearchHitWrapperFactory createDocumentWrapperFactory() {
+        return options.versionField.isEmpty() ? MetaSearchHitWrapper.FACTORY : SourceSearchHitWrapper.FACTORY;
     }
 
     ElasticSearchIdAndVersionStream createElasticSearchIdAndVersionStream(ScrutineerCommandLineOptions options) {
         openClient(options);
-        ElasticSearchDownloader ed = new ElasticSearchDownloader(client, options.indexName, options.query, options.versionField, idAndVersionFactory, documentWrapperFactory);
+        ElasticSearchDownloader ed = new ElasticSearchDownloader(client, options.indexName, options.query, options.versionField, idAndVersionFactory, searchHitWrapperFactory);
         return new ElasticSearchIdAndVersionStream(ed, new ElasticSearchSorter(createSorter()), new IteratorFactory(idAndVersionFactory), SystemUtils.getJavaIoTmpDir().getAbsolutePath());
     }
 
@@ -170,7 +173,7 @@ public class Scrutineer {
     private static final int DEFAULT_SORT_MEM = 256 * 1024 * 1024;
     private final ScrutineerCommandLineOptions options;
     private IdAndVersionFactory idAndVersionFactory;
-    private DocumentWrapperFactory documentWrapperFactory;
+    private SearchHitWrapperFactory searchHitWrapperFactory;
     private Node node;
     private Client client;
     private Connection connection;
