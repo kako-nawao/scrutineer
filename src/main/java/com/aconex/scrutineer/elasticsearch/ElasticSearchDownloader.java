@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
-import com.aconex.scrutineer.*;
+import com.aconex.scrutineer.LogUtils;
+import com.aconex.scrutineer.IdAndVersionFactory;
+import com.aconex.scrutineer.SearchHitWrapper;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -28,19 +30,17 @@ public class ElasticSearchDownloader {
     private final String indexName;
     private final String query;
     private final String versionField;
-    private final boolean skipFields;
     private final IdAndVersionFactory idAndVersionFactory;
-    private final DocumentWrapperFactory documentWrapperFactory;
+    private final SearchHitWrapperFactory searchHitWrapperFactory;
 
 
-    public ElasticSearchDownloader(Client client, String indexName, String query, String versionField, IdAndVersionFactory idAndVersionFactory, DocumentWrapperFactory documentWrapperFactory) {
+    public ElasticSearchDownloader(Client client, String indexName, String query, String versionField, IdAndVersionFactory idAndVersionFactory, SearchHitWrapperFactory searchHitWrapperFactory) {
         this.client = client;
         this.indexName = indexName;
         this.query = query;
         this.versionField = versionField;
-        this.skipFields = versionField.isEmpty();
         this.idAndVersionFactory = idAndVersionFactory;
-        this.documentWrapperFactory = documentWrapperFactory;
+        this.searchHitWrapperFactory = searchHitWrapperFactory;
     }
 
     public void downloadTo(OutputStream outputStream) {
@@ -71,7 +71,7 @@ public class ElasticSearchDownloader {
     boolean writeSearchResponseToOutputStream(ObjectOutputStream objectOutputStream, SearchResponse searchResponse) throws IOException {
         SearchHit[] hits = searchResponse.getHits().hits();
         for (SearchHit hit : hits) {
-            DocumentWrapper docWrapper = documentWrapperFactory.create(hit, versionField);
+            SearchHitWrapper docWrapper = searchHitWrapperFactory.create(hit, versionField);
         	idAndVersionFactory.create(docWrapper.getId(), docWrapper.getVersion()).writeToStream(objectOutputStream);
             numItems++;
         }
@@ -88,13 +88,15 @@ public class ElasticSearchDownloader {
         searchRequestBuilder.setSearchType(SearchType.SCAN);
         searchRequestBuilder.setQuery(createQuery());
         searchRequestBuilder.setSize(BATCH_SIZE);
-        if (skipFields) {
+        if (versionField.isEmpty()) {
             searchRequestBuilder.setNoFields();
+            searchRequestBuilder.setVersion(true);
+        } else {
+            searchRequestBuilder.addField(versionField);
+            searchRequestBuilder.setVersion(false);
         }
         searchRequestBuilder.setExplain(false);
-        searchRequestBuilder.setVersion(true);
         searchRequestBuilder.setScroll(TimeValue.timeValueMinutes(SCROLL_TIME_IN_MINUTES));
-
         return searchRequestBuilder.execute().actionGet();
     }
 

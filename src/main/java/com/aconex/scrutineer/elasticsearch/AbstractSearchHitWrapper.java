@@ -1,12 +1,14 @@
-package com.aconex.scrutineer;
+package com.aconex.scrutineer.elasticsearch;
+
+import com.aconex.scrutineer.SearchHitWrapper;
 
 import org.elasticsearch.search.SearchHit;
 
-public abstract class AbstractDocumentWrapper implements DocumentWrapper {
+public abstract class AbstractSearchHitWrapper implements SearchHitWrapper {
 
     private final SearchHit hit;
 
-    protected AbstractDocumentWrapper(SearchHit hit) {
+    protected AbstractSearchHitWrapper(SearchHit hit) {
         this.hit = hit;
     }
 
